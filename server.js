@@ -5,6 +5,7 @@ var express = require('express');
 var querystring = require('querystring');
 var url = require('url');
 var https = require('https');
+var fs = require("fs");
 var router = express.Router();
 var app = express();
 
@@ -174,7 +175,7 @@ function handle(resjson1, resjson2, Callback) {
 }
 
 router.get('/case', function (req, res) {
-    console.log(req.url);
+    fs.appendFile('resuest', req.url+'\n');
     var query = querystring.parse(url.parse(req.url).query);
     var id1 = query['id1'];
     var id2 = query['id2'];
