@@ -4,7 +4,8 @@
 var express = require('express');
 var querystring = require('querystring');
 var url = require('url');
-var http = require('http');
+var https = require('https');
+var router = express.Router();
 var app = express();
 
 function formUrlAttr(expr) {
@@ -104,7 +105,7 @@ function handleId1_Id2(entity1, entity2) {
     var length = RId.length;
     var state = length+1;
     for (var i = 0; i < length; ++i){
-        http.get(formUrlId(Rid[i]), function (response) {
+        https.get(formUrlId(Rid[i]), function (response) {
             var body = '';
             response.on('data', function(data) {
                 body += data;
@@ -122,7 +123,7 @@ function handleId1_Id2(entity1, entity2) {
             });
         })
     }
-    http.get(formUrlAttr('Rid='+Id2), function (response) {
+    https.get(formUrlAttr('Rid='+Id2), function (response) {
         var body = '';
         response.on('data', function(data) {
             body += data;
@@ -163,18 +164,19 @@ function handle(resjson1, resjson2, Callback) {
     }
 }
 
-app.get('/case', function (res, req) {
+router.get('/case', function (req, res) {
+    console.log(req.url);
     var query = querystring.parse(url.parse(req.url).query);
     var id1 = query['id1'];
     var id2 = query['id2'];
-    http.get(formUrlId(id1), function (response) {
+    https.get(formUrlId(id1), function (response) {
         var body = '';
         response.on('data', function(data) {
             body += data;
         });
         response.on('end', function() {
             var res_json1 = JSON.parse(body);
-            http.get(formUrlId(id2), function (response2) {
+            https.get(formUrlId(id2), function (response2) {
                 var body2 = '';
                 response2.on('data', function(data) {
                     body2 += data;
@@ -189,5 +191,7 @@ app.get('/case', function (res, req) {
         });
     });
 });
+
+app.use('/', router);
 
 app.listen(80);
