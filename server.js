@@ -4,7 +4,6 @@
 var express = require('express');
 var querystring = require('querystring');
 var url = require('url');
-var request = require('request');
 var http = require('http');
 var app = express();
 
