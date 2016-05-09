@@ -31,12 +31,23 @@ function compareR(result, entity, startlist, endlist) {
 function compareFJC(result, entity1, entity2, startlist, endlist){
     var array;
     if (entity1.F != undefined && entity2.F != undefined){
-        var FId1 = entity1.F.FId;
-        var FId2 = entity2.F.FId;
-        if (FId1 == FId2){
-            array = startlist.slice();
-            array.push(FId1);
-            result.push(array.concat(endlist))
+        var F1 = entity1.F;
+        var F2 = entity2.F;
+        var length1 = F1.length;
+        var length2 = F2.length;
+        var FId1;
+        var FId2;
+        while(length1--){
+            FId1 = F1[length1].FId;
+            length2 = F2.length;
+            while(length2--){
+                FId2 = F2[length2].FId;
+                if (FId1 == FId2){
+                    array = startlist.slice();
+                    array.push(FId1);
+                    result.push(array.concat(endlist))
+                }
+            }
         }
     }
     if (entity1.J != undefined && entity2.J != undefined){
@@ -49,8 +60,8 @@ function compareFJC(result, entity1, entity2, startlist, endlist){
         }
     }
     if (entity1.C != undefined && entity2.C != undefined){
-        var CId1 = entity1.C.JId;
-        var CId2 = entity2.C.JId;
+        var CId1 = entity1.C.CId;
+        var CId2 = entity2.C.CId;
         if (CId1 == CId2){
             array = startlist.slice();
             array.push(CId1);
@@ -61,17 +72,21 @@ function compareFJC(result, entity1, entity2, startlist, endlist){
 
 function compareFJCA(result, entity1, entity2, startlist, endlist) {
     var array;
-    compareFJC(result, entity1, entity2);
+    compareFJC(result, entity1, entity2, startlist, endlist);
     var AA1 = entity1.AA;
     var AA2 = entity2.AA;
     var length1 = AA1.length;
     var length2 = AA2.length;
+    var AuId1;
+    var AuId2;
     while(length1--){
+        AuId1 = AA1[length1].AuId;
         length2 = AA2.length;
         while(length2--){
-            if (AA1[length1] == AA2[length2]){
+            AuId2 = AA2[length2].AuId;
+            if (AuId1 == AuId2){
                 array = startlist.slice();
-                array.push(AA1[length1]);
+                array.push(AuId1);
                 result.push(array.concat(endlist));
                 break;
             }
@@ -91,7 +106,7 @@ function handleId1_AuId2() {
     
 }
 
-function handleId1_Id2(entity1, entity2) {
+function handleId1_Id2(entity1, entity2, Callback) {
     var result = [];
     var Id1 = entity1.Id;
     var Id2 = entity2.Id;
@@ -103,9 +118,8 @@ function handleId1_Id2(entity1, entity2) {
 
     var RId = entity1.RId;
     var length = RId.length;
-    var state = length+1;
     for (var i = 0; i < length; ++i){
-        https.get(formUrlId(Rid[i]), function (response) {
+        https.get(formUrlId(RId[i]), function (response) {
             var body = '';
             response.on('data', function(data) {
                 body += data;
@@ -119,11 +133,10 @@ function handleId1_Id2(entity1, entity2) {
 
                 // 3-hop
                 compareFJCA(result, Rentity, entity2, [Id1, Rentity.Id], [Id2]);
-                state--;
             });
         })
     }
-    https.get(formUrlAttr('Rid='+Id2), function (response) {
+    https.get(formUrlAttr('RId='+Id2), function (response) {
         var body = '';
         response.on('data', function(data) {
             body += data;
@@ -137,13 +150,9 @@ function handleId1_Id2(entity1, entity2) {
                 entity = entities[i];
                 compareFJCA(result, entity1, entity, [Id1], [entity.Id, Id2]);
             }
-            state--;
+            Callback(result);
         });
     });
-    while(state){
-
-    }
-    return result;
 }
 
 function handle(resjson1, resjson2, Callback) {
@@ -159,7 +168,7 @@ function handle(resjson1, resjson2, Callback) {
         if (entity2.AA == undefined){
             handleId1_AuId2(entity1.Id, entity2.Id);
         }else{
-            Callback(handleId1_Id2(entity1, entity2));
+            handleId1_Id2(entity1, entity2, Callback);
         }
     }
 }
