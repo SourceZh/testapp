@@ -115,7 +115,7 @@ function compareA(result, entity, Auid2, startlist, endlist) {
 function compareAf(result, field1, field2, startlist, endlist) {
     var array;
     var length1 = field1.length;
-    var length2 = field2.lenght;
+    var length2 = field2.length;
     for (var i = 0; i < length1; ++i){
         for (var j = 0; j < length2; ++j){
             if (field1[i] == field2[j]){
@@ -125,6 +125,10 @@ function compareAf(result, field1, field2, startlist, endlist) {
             }
         }
     }
+}
+
+function compareId(result, Idlist1, Idlist2, startlist, endlist) {
+    compareAf(result, Idlist1, Idlist2, startlist, endlist);
 }
 
 function counter(cnt, Callback, data) {
@@ -159,12 +163,31 @@ function counter_3(cnt, result, Id2, AA, Authors, field1, AuId1, Callback) {
     }
 }
 
+function counter_4(cnt, Auid1, Auid2, field1, field2, Idlist1, Idlist2, IdRId, Callback) {
+    if (cnt == 0){
+        var result = [];
+        // 2-hop 2.1
+        compareAf(result, field1, field2, [Auid1], [Auid2]);
+        console.log(result);
+        // 2-hop 2.2
+        compareId(result, Idlist1, Idlist2, [Auid1], [Auid2]);
+        // 2-hop 3.1
+        var length = Idlist1.length;
+        var Id;
+        while(length--){
+            Id = Idlist1[length];
+            compareId(result, IdRId[Id], Idlist2, [Auid1, Id], [Auid2]);
+        }
+        Callback(result);
+    }
+}
+
 function addunique(array, item) {
     var length = array.length;
     var unique = true;
     while(length--){
         if (array[length]==item){
-            uinque = false;
+            unique = false;
             break;
         }
     }
@@ -176,17 +199,66 @@ function addunique(array, item) {
 function searchAforadd(entity, field, Auid2) {
     var AA = entity.AA;
     var AA_length = AA.length;
-    if (AA[0].AfId == undefined){
-        return;
-    }
     for (var j = 0; j < AA_length; ++j){
-        if (AA[j].AuId == Auid2){
+        if (AA[j].AuId == Auid2 && AA[j].AfId != undefined){
             addunique(field, AA[j].AfId);
         }
     }
 }
 
-function handleAuId1_AuId2(auid1, auid2){
+function handleAuId1_AuId2(Auid1, Auid2, Callback){
+    console.log("enter Auid_1->Auid_2");
+
+    // 2-hop
+    var field1 = [];
+    var Idlist1 = [];
+    var IdRId = {};
+    var field2 = [];
+    var Idlist2 = [];
+
+    var cnt = 1;
+    https.get(formUrlAuId(Auid1), function (response) {
+        var body = '';
+        response.on('data', function (data) {
+            body += data;
+        });
+        response.on('end', function () {
+            var res_json = JSON.parse(body);
+            var entities = res_json.entities;
+            var length = entities.length;
+            var entity;
+            var Id;
+            while (length--){
+                entity = entities[length];
+                Id = entity.Id;
+                searchAforadd(entity, field1, Auid1);
+                Idlist1.push(Id);
+                IdRId[Id] = entity.RId;
+            }
+            counter_4(--cnt, Auid1, Auid2, field1, field2, Idlist1, Idlist2, IdRId, Callback);
+        });
+    });
+
+
+    cnt += 1;
+    https.get(formUrlAuId(Auid2), function (response) {
+        var body = '';
+        response.on('data', function (data) {
+            body += data;
+        });
+        response.on('end', function () {
+            var res_json = JSON.parse(body);
+            var entities = res_json.entities;
+            var length = entities.length;
+            var entity;
+            while (length--){
+                entity = entities[length];
+                searchAforadd(entity, field2, Auid2);
+                Idlist2.push(entity.Id);
+            }
+            counter_4(--cnt, Auid1, Auid2, field1, field2, Idlist1, Idlist2, IdRId, Callback);
+        });
+    });
 
 }
 
@@ -476,7 +548,7 @@ function handle(resjson1, resjson2, Callback) {
     var entity2 = resjson2.entities[0];
     if (entity1.AA == undefined){
         if (entity2.AA == undefined){
-            handleAuId1_AuId2(entity1.Id, entity2.Id);
+            handleAuId1_AuId2(entity1.Id, entity2.Id, Callback);
         }else{
             handleAuId1_Id2(entity1, entity2, Callback);
         }
