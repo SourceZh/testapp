@@ -95,6 +95,13 @@ function compareFJCA(result, entity1, entity2, startlist, endlist) {
     }
 }
 
+function counter(cnt, Callback, data) {
+    console.log(cnt);
+    if (cnt == 0){
+        Callback(data);
+    }
+}
+
 function handleAuId1_AuId2(auid1, auid2){
 
 }
@@ -108,6 +115,7 @@ function handleId1_AuId2() {
 }
 
 function handleId1_Id2(entity1, entity2, Callback) {
+    console.log("enter id1_1=->id_2");
     var result = [];
     var Id1 = entity1.Id;
     var Id2 = entity2.Id;
@@ -119,6 +127,8 @@ function handleId1_Id2(entity1, entity2, Callback) {
 
     var RId = entity1.RId;
     var length = RId.length;
+    var cnt = length+1;
+
     for (var i = 0; i < length; ++i){
         https.get(formUrlId(RId[i]), function (response) {
             var body = '';
@@ -134,9 +144,13 @@ function handleId1_Id2(entity1, entity2, Callback) {
 
                 // 3-hop
                 compareFJCA(result, Rentity, entity2, [Id1, Rentity.Id], [Id2]);
+
+                counter(--cnt, Callback, result);
+
             });
         })
     }
+
     https.get(formUrlAttr('RId='+Id2), function (response) {
         var body = '';
         response.on('data', function(data) {
@@ -151,7 +165,7 @@ function handleId1_Id2(entity1, entity2, Callback) {
                 entity = entities[i];
                 compareFJCA(result, entity1, entity, [Id1], [entity.Id, Id2]);
             }
-            Callback(result);
+            counter(--cnt, Callback, result);
         });
     });
 }
