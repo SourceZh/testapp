@@ -313,7 +313,7 @@ function handleAuId1_Id2(entiey1, entity2, Callback) {
                 console.log(entity.Id);
                 // if (entity.Id != Id2){
                     // 3-hop 3.2
-                    compareFJCA(result, entity, entity2, [Auid1, entity.Id], [Id2], Auid1);
+                    compareFJCA(result, entity, entity2, [Auid1, entity.Id], [Id2]);
                     // 3-hop 3.1
                     RId = entity.RId;
                     if (RId != undefined){
