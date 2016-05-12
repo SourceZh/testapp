@@ -168,7 +168,6 @@ function counter_4(cnt, Auid1, Auid2, field1, field2, Idlist1, Idlist2, IdRId, C
         var result = [];
         // 2-hop 2.1
         compareAf(result, field1, field2, [Auid1], [Auid2]);
-        console.log(result);
         // 2-hop 2.2
         compareId(result, Idlist1, Idlist2, [Auid1], [Auid2]);
         // 2-hop 3.1
@@ -276,6 +275,7 @@ function handleAuId1_Id2(entiey1, entity2, Callback) {
 
     // 2-hop 2.1
     var cnt = 1;
+    var RIdlist = [];
     https.get(formUrlAttr('RId='+Id2), function (response) {
         var body ='';
         response.on('data', function (data) {
@@ -288,6 +288,7 @@ function handleAuId1_Id2(entiey1, entity2, Callback) {
             var entity;
             for (var i = 0; i < length; ++i){
                 entity = entities[i];
+                RIdlist.push(entity.Id);
                 compareA(result, entity, Auid1, [Auid1], [entity.Id, Id2]);
             }
             counter_3(--cnt, result, Id2, AA, Authors, field1, Auid1, Callback);
@@ -307,35 +308,19 @@ function handleAuId1_Id2(entiey1, entity2, Callback) {
             var length = entities.length;
             for (var i = 0; i < length; ++i){
                 entity = entities[i];
-                // 3-hop 3.2
+                var RId;
+                var RId_length;
                 if (entity.Id != Id2){
+                    // 3-hop 3.2
                     compareFJCA(result, entity, entity2, [Auid1, entity.Id], [Id2], Auid1);
                     // 3-hop 3.1
-                    var RIdlist = [];
-                    cnt += 1;
-                    https.get(formUrlAttr('RId='+Id2), function (response) {
-                        var body = '';
-                        response.on('data', function (data) {
-                            body += data;
-                        });
-                        response.on('end', function () {
-                            var res_json_ = JSON.parse(body);
-                            var entities_ = res_json_.entities;
-                            var length_ = entities_.length;
-                            var entity_;
-                            for (var i = 0; i < length_; ++i){
-                                entity_ = entities_[i];
-                                RIdlist.push(entity_.Id);
-                            }
-                            var RId = entity.RId;
-                            var RId_length = RId.length;
-                            for (var j = 0; j < RId_length; ++j){
-                                compareR(result, RIdlist, RId[j], [Auid1, entity.Id, RId[j]], [Id2]);
-                            }
-
-                            counter_3(--cnt, result, Id2, AA, Authors, field1, Auid1, Callback);
-                        });
-                    });
+                    RId = entity.RId;
+                    if (RId != undefined){
+                        RId_length = RId.length;
+                        while(length--){
+                            compareR(result, RIdlist, RId[length], [Auid1, entity.Id, RId[length]], [Id2]);
+                        }
+                    }
                 }
                 // 3-hop 3.3
                 searchAforadd(entity, field1, Auid1);
