@@ -561,29 +561,41 @@ function handle(resjson1, resjson2, Callback) {
     }
 }
 
+function cb(cnt, resjson1, resjson2, Callback) {
+    if (cnt == 0){
+        handle(resjson1, resjson2, Callback);
+    }
+}
+
 router.get('/case', function (req, res) {
     fs.appendFile('resuest', req.url+'\n');
     var query = querystring.parse(url.parse(req.url).query);
     var id1 = query['id1'];
     var id2 = query['id2'];
+    var res_json1;
+    var res_json2;
+    var cnt = 2;
     https.get(formUrlId(id1), function (response) {
         var body = '';
         response.on('data', function(data) {
             body += data;
         });
         response.on('end', function() {
-            var res_json1 = JSON.parse(body);
-            https.get(formUrlId(id2), function (response2) {
-                var body2 = '';
-                response2.on('data', function(data) {
-                    body2 += data;
-                });
-                response2.on('end', function () {
-                    var res_json2 = JSON.parse(body2);
-                    handle(res_json1, res_json2, function (data) {
-                        res.json(data);
-                    });
-                });
+            res_json1 = JSON.parse(body);
+            cb(--cnt, res_json1, res_json2, function (data) {
+                res.json(data);
+            });
+        });
+    });
+    https.get(formUrlId(id2), function (response2) {
+        var body2 = '';
+        response2.on('data', function(data) {
+            body2 += data;
+        });
+        response2.on('end', function () {
+            res_json2 = JSON.parse(body2);
+            cb(--cnt, res_json1, res_json2, function (data) {
+                res.json(data);
             });
         });
     });
