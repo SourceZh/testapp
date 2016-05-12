@@ -73,7 +73,7 @@ function compareFJC(result, entity1, entity2, startlist, endlist){
     }
 }
 
-function compareFJCA(result, entity1, entity2, startlist, endlist, auid) {
+function compareFJCA(result, entity1, entity2, startlist, endlist) {
     var array;
     compareFJC(result, entity1, entity2, startlist, endlist);
     var AA1 = entity1.AA;
@@ -84,9 +84,6 @@ function compareFJCA(result, entity1, entity2, startlist, endlist, auid) {
     var AuId2;
     for (var i = 0; i < length1; ++i){
         AuId1 = AA1[i].AuId;
-        if (AuId1 == auid){
-            continue;
-        }
         for (var j = 0; j < length2; ++j){
             AuId2 = AA2[j].AuId;
             if (AuId1 == AuId2){
@@ -311,18 +308,16 @@ function handleAuId1_Id2(entiey1, entity2, Callback) {
                 var RId;
                 var RId_length;
                 console.log(entity.Id);
-                // if (entity.Id != Id2){
-                    // 3-hop 3.2
-                    compareFJCA(result, entity, entity2, [Auid1, entity.Id], [Id2]);
-                    // 3-hop 3.1
-                    RId = entity.RId;
-                    if (RId != undefined){
-                        RId_length = RId.length;
-                        while(RId_length--){
-                            compareR(result, RIdlist, RId[length], [Auid1, entity.Id, RId[length]], [Id2]);
-                        }
+                // 3-hop 3.2
+                compareFJCA(result, entity, entity2, [Auid1, entity.Id], [Id2]);
+                // 3-hop 3.1
+                RId = entity.RId;
+                if (RId != undefined){
+                    RId_length = RId.length;
+                    while(RId_length--){
+                        compareR(result, RIdlist, RId[length], [Auid1, entity.Id, RId[length]], [Id2]);
                     }
-                // }
+                }
                 // 3-hop 3.3
                 searchAforadd(entity, field1, Auid1);
             }
@@ -428,9 +423,7 @@ function handleId1_AuId2(entity1, entity2, Callback) {
             while (length--){
                 entity = entities[length];
                 // 3-hop 3.2
-                if (entity.Id != Id1){
-                    compareFJCA(result, entity1, entity, [Id1], [entity.Id, Auid2], Auid2);
-                }
+                compareFJCA(result, entity1, entity, [Id1], [entity.Id, Auid2]);
                 // 3-hop 3.3
                 searchAforadd(entity, field2, Auid2);
             }
@@ -493,10 +486,8 @@ function handleId1_Id2(entity1, entity2, Callback) {
                 entity = entities[i];
                 // 2-hop 2.2
                 RIdlist.push(entity.Id);
-                if (entity.Id != Id1){
-                    // 3-hop 3.2
-                    compareFJCA(result, entity1, entity, [Id1], [entity.Id, Id2]);
-                }
+                // 3-hop 3.2
+                compareFJCA(result, entity1, entity, [Id1], [entity.Id, Id2]);
             }
             // 2-hop 2.2
             var RId1_length = RId1.length;
@@ -525,6 +516,8 @@ function handleId1_Id2(entity1, entity2, Callback) {
                     counter(--cnt, Callback, result);
                 });
             });
+        }else{
+            compareFJCA(result, entity2, entity2, [Id1, Id2], [Id2]);
         }
     }
 }
