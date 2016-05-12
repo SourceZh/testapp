@@ -310,18 +310,19 @@ function handleAuId1_Id2(entiey1, entity2, Callback) {
                 entity = entities[i];
                 var RId;
                 var RId_length;
-                if (entity.Id != Id2){
+                console.log(entity.Id);
+                // if (entity.Id != Id2){
                     // 3-hop 3.2
                     compareFJCA(result, entity, entity2, [Auid1, entity.Id], [Id2], Auid1);
                     // 3-hop 3.1
                     RId = entity.RId;
                     if (RId != undefined){
                         RId_length = RId.length;
-                        while(length--){
+                        while(RId_length--){
                             compareR(result, RIdlist, RId[length], [Auid1, entity.Id, RId[length]], [Id2]);
                         }
                     }
-                }
+                // }
                 // 3-hop 3.3
                 searchAforadd(entity, field1, Auid1);
             }
