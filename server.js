@@ -531,7 +531,7 @@ function handleId1_Id2(entity1, entity2, Callback) {
                     var res_json = JSON.parse(body);
                     var Rentity = res_json.entities[0];
                     // 3-hop 3.1
-                    var id = Rentity.id;
+                    var id = Rentity.Id;
                     Reference[id] = Rentity.RId;
                     compareFJCA(result, Rentity, entity2, [Id1, id], [Id2]);
                     counter(--cnt, result, Id1, Id2, RIdlist, Reference, RId1, Callback);
