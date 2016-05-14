@@ -13,12 +13,36 @@ function formUrlAttr(expr) {
     return 'https://oxfordhk.azure-api.net/academic/v1.0/evaluate?expr='+expr+'&count=10000&attributes=Id,AA.AuId,AA.AfId,F.FId,J.JId,C.CId,RId&subscription-key=f7cc29509a8443c5b3a5e56b0e38b5a6';
 }
 
-function formUrlId(Id) {
-    return formUrlAttr('Id='+Id);
+function formUrlAttrNoAfidRId(expr) {
+    return 'https://oxfordhk.azure-api.net/academic/v1.0/evaluate?expr='+expr+'&count=10000&attributes=Id,AA.AuId,F.FId,J.JId,C.CId&subscription-key=f7cc29509a8443c5b3a5e56b0e38b5a6';
 }
 
 function formUrlAuId(Auid) {
     return formUrlAttr('Composite(AA.AuId='+Auid+')');
+}
+
+function formUrlAuIdAttrAARId(Auid) {
+    return 'https://oxfordhk.azure-api.net/academic/v1.0/evaluate?expr=Composite(AA.AuId='+Auid+')&count=10000&attributes=Id,AA.AuId,AA.AfId,RId&subscription-key=f7cc29509a8443c5b3a5e56b0e38b5a6';
+}
+
+function formUrlAuidAttrAA(Auid) {
+    return 'https://oxfordhk.azure-api.net/academic/v1.0/evaluate?expr=Composite(AA.AuId='+Auid+')&count=10000&attributes=Id,AA.AuId,AA.AfId&subscription-key=f7cc29509a8443c5b3a5e56b0e38b5a6';
+}
+
+function formUrlAuidAttrAANoId(Auid) {
+    return 'https://oxfordhk.azure-api.net/academic/v1.0/evaluate?expr=Composite(AA.AuId='+Auid+')&count=10000&attributes=AA.AuId,AA.AfId&subscription-key=f7cc29509a8443c5b3a5e56b0e38b5a6';
+}
+
+function formUrlIdAttrAuidRId(Id) {
+    return 'https://oxfordhk.azure-api.net/academic/v1.0/evaluate?expr=Id='+Id+'&count=10000&attributes=Id,AA.AuId,RId&subscription-key=f7cc29509a8443c5b3a5e56b0e38b5a6';
+}
+
+function formUrlIdNoAfid(Id) {
+    return 'https://oxfordhk.azure-api.net/academic/v1.0/evaluate?expr=Id='+Id+'&count=10000&attributes=Id,AA.AuId,F.FId,J.JId,C.CId,RId&subscription-key=f7cc29509a8443c5b3a5e56b0e38b5a6';
+}
+
+function formUrlRidAttrAuid(Rid) {
+    return 'https://oxfordhk.azure-api.net/academic/v1.0/evaluate?expr=RId='+Rid+'&count=10000&attributes=Id,AA.AuId&subscription-key=f7cc29509a8443c5b3a5e56b0e38b5a6';
 }
 
 function compareR(result, RIdlist, Id2, list) {
@@ -124,9 +148,15 @@ function compareId(result, Idlist1, Idlist2, startlist, endlist) {
     compareAf(result, Idlist1, Idlist2, startlist, endlist);
 }
 
-function counter(cnt, Callback, data) {
+function counter(cnt, result, Id1, Id2, RIdlist, Reference, Idlist, Callback) {
     if (cnt == 0){
-        Callback(data);
+        var length = Idlist.length;
+        while(length--){
+            var id = Idlist[length];
+            compareR(result, RIdlist, id, [Id1, id, Id2]);
+            compareRlist(result, RIdlist, Reference[id], [Id1, id], [Id2]);
+        }
+        Callback(result);
     }
 }
 
@@ -223,7 +253,7 @@ function handleAuId1_AuId2(Auid1, Auid2, Callback){
     var Idlist2 = [];
 
     var cnt = 1;
-    https.get(formUrlAuId(Auid1), function (response) {
+    https.get(formUrlAuIdAttrAARId(Auid1), function (response) {
         var body = '';
         response.on('data', function (data) {
             body += data;
@@ -247,7 +277,7 @@ function handleAuId1_AuId2(Auid1, Auid2, Callback){
 
 
     cnt += 1;
-    https.get(formUrlAuId(Auid2), function (response) {
+    https.get(formUrlAuidAttrAA(Auid2), function (response) {
         var body = '';
         response.on('data', function (data) {
             body += data;
@@ -285,7 +315,7 @@ function handleAuId1_Id2(entiey1, entity2, Callback) {
     // 2-hop 2.1
     var cnt = 1;
     var RIdlist = [];
-    https.get(formUrlAttr('RId='+Id2), function (response) {
+    https.get(formUrlRidAttrAuid(Id2), function (response) {
         var body ='';
         response.on('data', function (data) {
             body += data;
@@ -338,7 +368,7 @@ function handleAuId1_Id2(entiey1, entity2, Callback) {
     for (var j = 0; j < AA_length; ++j){
         Auid = AA[j].AuId;
         Authors[Auid] = [];
-        https.get(formUrlAuId(Auid), function (response) {
+        https.get(formUrlAuidAttrAANoId(Auid), function (response) {
             var body = '';
             response.on('data', function (data) {
                 body += data;
@@ -378,7 +408,7 @@ function handleId1_AuId2(entity1, entity2, Callback) {
     var Rlength = RId.length;
     var cnt = Rlength;
     for (var i = 0; i < Rlength; ++i){
-        https.get(formUrlId(RId[i]), function (response) {
+        https.get(formUrlIdAttrAuidRId(RId[i]), function (response) {
             var body = '';
             response.on('data', function(data) {
                 body += data;
@@ -431,7 +461,7 @@ function handleId1_AuId2(entity1, entity2, Callback) {
     for (var j = 0; j < AA_length; ++j){
         Auid = AA[j].AuId;
         Authors[Auid] = [];
-        https.get(formUrlAuId(Auid), function (response) {
+        https.get(formUrlAuidAttrAANoId(Auid), function (response) {
             var body = '';
             response.on('data', function (data) {
                 body += data;
@@ -456,6 +486,7 @@ function handleId1_Id2(entity1, entity2, Callback) {
     var result = [];
     var Id1 = entity1.Id;
     var Id2 = entity2.Id;
+    var Reference = {};
     // 1-hop 1.1
     compareR(result, entity1.RId, Id2, [Id1, Id2]);
 
@@ -465,7 +496,7 @@ function handleId1_Id2(entity1, entity2, Callback) {
     var RIdlist = [];
     var RId1 = entity1.RId;
     var cnt = 1;
-    https.get(formUrlAttr('RId='+Id2), function (response) {
+    https.get(formUrlAttrNoAfidRId('RId='+Id2), function (response) {
         var body = '';
         response.on('data', function(data) {
             body += data;
@@ -482,14 +513,8 @@ function handleId1_Id2(entity1, entity2, Callback) {
                 // 3-hop 3.2
                 compareFJCA(result, entity1, entity, [Id1], [entity.Id, Id2]);
             }
-            // 2-hop 2.2
-            var RId1_length = RId1.length;
-            while(RId1_length--){
-                var id = RId1[RId1_length];
-                compareR(result, RIdlist, id, [Id1, id, Id2]);
-            }
 
-            counter(--cnt, Callback, result);
+            counter(--cnt, result, Id1, Id2, RIdlist, Reference, RId1, Callback);
         });
     });
 
@@ -497,7 +522,7 @@ function handleId1_Id2(entity1, entity2, Callback) {
     for (var i = 0; i < length; ++i){
         if (RId1[i] != Id2){
             cnt += 1;
-            https.get(formUrlId(RId1[i]), function (response) {
+            https.get(formUrlIdNoAfid(RId1[i]), function (response) {
                 var body = '';
                 response.on('data', function(data) {
                     body += data;
@@ -506,11 +531,14 @@ function handleId1_Id2(entity1, entity2, Callback) {
                     var res_json = JSON.parse(body);
                     var Rentity = res_json.entities[0];
                     // 3-hop 3.1
-                    compareFJCA(result, Rentity, entity2, [Id1, Rentity.Id], [Id2]);
-                    counter(--cnt, Callback, result);
+                    var id = Rentity.id;
+                    Reference[id] = Rentity.RId;
+                    compareFJCA(result, Rentity, entity2, [Id1, id], [Id2]);
+                    counter(--cnt, result, Id1, Id2, RIdlist, Reference, RId1, Callback);
                 });
             });
         }else{
+            Reference[Id2] = entity2.RId;
             compareFJCA(result, entity2, entity2, [Id1, Id2], [Id2]);
         }
     }
@@ -547,7 +575,7 @@ router.get('/case', function (req, res) {
     var res_json1;
     var res_json2;
     var cnt = 2;
-    https.get(formUrlId(id1), function (response) {
+    https.get(formUrlIdNoAfid(id1), function (response) {
         var body = '';
         response.on('data', function(data) {
             body += data;
@@ -559,7 +587,7 @@ router.get('/case', function (req, res) {
             });
         });
     });
-    https.get(formUrlId(id2), function (response2) {
+    https.get(formUrlIdNoAfid(id2), function (response2) {
         var body2 = '';
         response2.on('data', function(data) {
             body2 += data;
